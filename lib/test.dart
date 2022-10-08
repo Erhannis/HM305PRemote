@@ -21,15 +21,15 @@ Future<void> testExchanger1() async {
       log("--> node $id");
 
       await sleep(rand.nextInt(2000));
-      log("$id(1) <- ${await ex.exchange("","$id(1)")}");
+      log("$id(1) <- ${await ex.exchange("$id(1)")}");
       await sleep(rand.nextInt(2000));
-      log("$id(2) <- ${await ex.exchange("","$id(2)")}");
+      log("$id(2) <- ${await ex.exchange("$id(2)")}");
       await sleep(rand.nextInt(2000));
-      log("$id(3) <- ${await ex.exchange("","$id(3)")}");
+      log("$id(3) <- ${await ex.exchange("$id(3)")}");
       await sleep(rand.nextInt(2000));
-      log("$id(4) <- ${await ex.exchange("","$id(4)")}");
+      log("$id(4) <- ${await ex.exchange("$id(4)")}");
       await sleep(rand.nextInt(2000));
-      log("$id(5) <- ${await ex.exchange("","$id(5)")}");
+      log("$id(5) <- ${await ex.exchange("$id(5)")}");
 
       wg.done();
       log("<-- node $id");
@@ -71,7 +71,7 @@ Future<void> testExchanger2() async {
           j = rand.nextInt(100);
           totalTx += j;
           txCount[j] = txCount[j]! + 1;
-          j = await ex.exchange("", j).timeout(Duration(seconds: 10), onTimeout: () async {
+          j = await ex.exchange(j).timeout(Duration(seconds: 10), onTimeout: () async {
             log("timeout in $id ; $j $ex $k $totalTx $totalRx $txCount $rxCount");
             return -1;
           });
@@ -125,7 +125,7 @@ Future<void> testExchanger3() async {
           await sleep(rand.nextInt(100));
           var j = "$id:$k";
           txCount[j] = txCount[j]! + 1;
-          var l = await ex.exchange("", j).timeout(Duration(seconds: 10), onTimeout: () async {
+          var l = await ex.exchange(j).timeout(Duration(seconds: 10), onTimeout: () async {
             log("timeout in $id ; $j $ex $k $txCount $rxCount");
             return "ERROR";
           });
@@ -178,18 +178,18 @@ Future<void> testChannel() async {
         await start.wait();
         log("t$id 1");
         for (var j = 0; j < MSGS; j++) {
-          log("t$id 2 $j");
+          //log("t$id 2 $j");
           await sleep(rand.nextInt(10));
-          log("t$id 3 $j");
+          //log("t$id 3 $j");
           var x = rand.nextInt(100);
-          log("t$id 4 $j");
+          //log("t$id 4 $j");
           txSum += x;
-          log("t$id 5 $j");
-          await co.write("t$id $j", x).timeout(Duration(seconds: 30), onTimeout: () async {
+          //log("t$id 5 $j");
+          await co.write(x).timeout(Duration(seconds: 30), onTimeout: () async {
             log("error on t$id : $j $txSum $rxSum $c $ci $co");
             throw Exception("ERROR");
           });
-          log("t$id 6 $j");
+          //log("t$id 6 $j");
         }
         log("t$id 7");
       } finally {
@@ -208,16 +208,16 @@ Future<void> testChannel() async {
         await start.wait();
         log("r$id 1");
         for (var j = 0; j < MSGS; j++) {
-          log("r$id 2 $j");
+          //log("r$id 2 $j");
           await sleep(rand.nextInt(10));
-          log("r$id 3 $j");
-          var x = await ci.read("r$id $j").timeout(Duration(seconds: 30), onTimeout: () async {
+          //log("r$id 3 $j");
+          var x = await ci.read().timeout(Duration(seconds: 30), onTimeout: () async {
             log("error on r$id : $j $txSum $rxSum $c $ci $co");
             throw Exception("ERROR");
           });
-          log("r$id 4 $j");
+          //log("r$id 4 $j");
           rxSum += x;
-          log("r$id 5 $j");
+          //log("r$id 5 $j");
         }
         log("r$id 6");
       } finally {
@@ -263,7 +263,7 @@ Future<void> testExchanger4() async {
           //await sleep(rand.nextInt(10));
           var j = "$id:$k";
           txCount[j] = txCount[j]! + 1;
-          var l = await ex.exchange("", j).timeout(Duration(seconds: 10), onTimeout: () async {
+          var l = await ex.exchange(j).timeout(Duration(seconds: 10), onTimeout: () async {
             log("timeout in $id ; $j $ex $k $txCount $rxCount");
             return "ERROR";
           });
