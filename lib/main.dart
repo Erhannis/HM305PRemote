@@ -76,7 +76,9 @@ class _MyHomePageState extends State<MyHomePage> {
           ElevatedButton(child: Text("Autoconnect"), onPressed: () async {
             await widget._iface.autoconnect();
           },),
-          if (widget._iface.isConnected()) ...[
+          Text(textAlign: TextAlign.center, "Connected to server: ${widget._iface.isConnected()}"),
+          if (widget._iface.isConnected()) Text(textAlign: TextAlign.center, "Server connected to PSU: ${widget._iface.serverConnectedToPSU}"),
+          if (widget._iface.isConnected() && widget._iface.serverConnectedToPSU) ...[
             ElevatedButton(style: ElevatedButton.styleFrom(
                 backgroundColor: state ? Colors.green : Colors.red,
                 foregroundColor: Colors.white,

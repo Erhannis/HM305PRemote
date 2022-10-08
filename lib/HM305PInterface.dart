@@ -9,6 +9,7 @@ import 'misc.dart';
 class HM305PInterface extends ChangeNotifier {
   MessageSocket? _sock;
 
+  bool serverConnectedToPSU = false;
   bool state = false;
   double liveVoltage = 0.0;
   double liveCurrent = 0.0;
@@ -36,6 +37,9 @@ class HM305PInterface extends ChangeNotifier {
               }
               try {
                 switch (parts[0]) {
+                  case "connected":
+                    serverConnectedToPSU = parts[1] == "True";
+                    break;
                   case "state":
                     state = parts[1] == "1";
                     break;
