@@ -10,7 +10,7 @@ const SERVICE_ID = "0f50032d-cc47-407c-9f1a-a3a28a680c1e";
 
 void main() async {
   runApp(const MyApp());
-  await testExchanger4();
+  await testChannel();
 }
 
 class MyApp extends StatelessWidget {
