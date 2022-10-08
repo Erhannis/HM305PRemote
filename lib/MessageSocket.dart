@@ -1,12 +1,14 @@
 // Derived from http://stupidpythonideas.blogspot.com/2013/05/sockets-are-byte-streams-not-message.html
 // and then translated from https://github.com/Erhannis/zeroconnect/blob/master/zeroconnect/message_socket.py
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:sync/sync.dart';
 
 import 'Channel.dart';
+import 'misc.dart';
 
 Uint8List uint64BigEndianBytes(int value) => Uint8List(8)..buffer.asByteData().setUint64(0, value, Endian.big);
 int bigEndianBytesUint64(Uint8List bytes) => bytes.buffer.asByteData().getUint64(0, Endian.big);
@@ -35,20 +37,63 @@ class MessageSocket {
         this._recvCountOut = _recvCountChannel.getOut();
 
         unawaited(Future(() async {
+            var sw = Stopwatch();
+            var sw_big1 = Stopwatch();
+            var sw_big2 = Stopwatch();
             //DO I don't think this handles socket closure
-            var pending = BytesBuilder();
-            var requested = 0;
+            List<List<int>> pending = [];
+            int accumulated = 0;
+            int? requested = null;
+
+            // I'm tempted to put a lock around the pending and accumulated code, but I don't THINK it's necessary.
+
+            sw.start();
+            sw_big1.start();
+            sw_big2.start();
+
+            unawaited(Future(() async {
+                while (true) {
+                    sw_big2.reset();
+                    if (requested == null) {
+                        requested = await _recvCountIn.read();
+                        //log("MS2 ${sw.lap()} rx request");
+                    }
+                    if (requested == 0) {
+                        await rxOut.write(Uint8List(0));
+                        requested = null;
+                    } else if (accumulated >= requested!) {
+                        var bb = BytesBuilder(copy: false);
+                        while (requested! > 0 && pending[0].length <= requested!) {
+                            var temp = pending.removeAt(0);
+                            bb.add(temp);
+                            requested = requested! - temp.length;
+                            accumulated -= temp.length;
+                        }
+                        if (requested! > 0) {
+                            bb.add(pending[0].sublist(0,requested!));
+                            pending[0] = pending[0].sublist(requested!, pending[0].length);
+                            accumulated -= requested!;
+                        }
+                        requested = null;
+                        //log("MS2 ${sw.lap()} collected response");
+                        var response = Uint8List.fromList(bb.takeBytes());
+                        //log("MS2 ${sw.lap()} built response");
+                        await rxOut.write(response); //TODO This seems like a lot of conversions
+                        //log("MS2 ${sw.lap()} tx data");
+                    } else {
+                        await sleep(10);
+                    }
+                    //log("MS2 ${sw_big2.lap()} send total");
+                }
+            }));
+
             await for (var data in _sock) { //TODO I'm pretty sure data will still accumulate in the Socket; I wish I could backpressure it
+                sw_big1.reset();
+                //log("MS1 ${sw.lap()} rx data");
                 pending.add(data);
-                if (requested == 0) {
-                    requested = await _recvCountIn.read();
-                }
-                if (pending.length >= requested) {
-                    var temp = pending.takeBytes();
-                    await rxOut.write(Uint8List.fromList(temp.getRange(0, requested).toList())); //TODO This seems like a lot of conversions
-                    pending.add(temp.getRange(requested, temp.length).toList());
-                    requested = 0;
-                }
+                accumulated += data.length;
+                //log("MS1 ${sw.lap()} added data - acc $accumulated");
+                //log("MS1 ${sw_big1.lap()} read total");
             }
         }));
     }
