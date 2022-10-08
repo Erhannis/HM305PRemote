@@ -50,12 +50,18 @@ class MessageSocket {
             sw.start();
             sw_big1.start();
             sw_big2.start();
+            bool broken = false;
 
             unawaited(Future(() async {
                 while (true) {
                     sw_big2.reset();
                     if (requested == null) {
                         requested = await _recvCountIn.read();
+                        if (broken) {
+                            await rxOut.write(null);
+                            requested = null;
+                            continue; //TODO Maybe just return?
+                        }
                         //log("MS2 ${sw.lap()} rx request");
                     }
                     if (requested == 0) {
@@ -82,18 +88,28 @@ class MessageSocket {
                         //log("MS2 ${sw.lap()} tx data");
                     } else {
                         await sleep(10);
+                        if (broken) {
+                            await rxOut.write(null);
+                            requested = null;
+                            continue; //TODO Maybe just return?
+                        }
                     }
                     //log("MS2 ${sw_big2.lap()} send total");
                 }
             }));
 
-            await for (var data in _sock) { //TODO I'm pretty sure data will still accumulate in the Socket; I wish I could backpressure it
-                sw_big1.reset();
-                //log("MS1 ${sw.lap()} rx data");
-                pending.add(data);
-                accumulated += data.length;
-                //log("MS1 ${sw.lap()} added data - acc $accumulated");
-                //log("MS1 ${sw_big1.lap()} read total");
+            try {
+                await for (var data in _sock) { //TODO I'm pretty sure data will still accumulate in the Socket; I wish I could backpressure it
+                    sw_big1.reset();
+                    //log("MS1 ${sw.lap()} rx data");
+                    pending.add(data);
+                    accumulated += data.length;
+                    //log("MS1 ${sw.lap()} added data - acc $accumulated");
+                    //log("MS1 ${sw_big1.lap()} read total");
+                }
+            } catch (e) {
+                log("Connection presumably closed: $e");
+                broken = true;
             }
         }));
     }
@@ -146,6 +162,10 @@ class MessageSocket {
     }
 
     Future<void> close() async {
-        await _sock.close();
+        try {
+            await _sock.close();
+        } catch (e) {
+            // Nothing
+        }
     }
 }

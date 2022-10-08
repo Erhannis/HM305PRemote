@@ -40,18 +40,19 @@ class HM305PInterface extends ChangeNotifier {
                     state = parts[1] == "1";
                     break;
                   case "liveVoltage":
-                    liveVoltage = double.parse(parts[1]);
+                    liveVoltage = double.parse(parts[1]) / 100;
                     break;
                   case "liveCurrent":
-                    liveCurrent = double.parse(parts[1]);
+                    liveCurrent = double.parse(parts[1]) / 1000;
                     break;
                   case "voltageSetpoint":
-                    voltageSetpoint = double.parse(parts[1]);
+                    voltageSetpoint = double.parse(parts[1]) / 100;
                     break;
                   case "currentSetpoint":
-                    currentSetpoint = double.parse(parts[1]);
+                    currentSetpoint = double.parse(parts[1]) / 1000;
                     break;
                 }
+                notifyListeners();
               } catch (e) {
                 log("error parsing state message $msg : $e");
               }
@@ -73,6 +74,7 @@ class HM305PInterface extends ChangeNotifier {
   Future<bool> autoconnect() async {
     if (_sock != null) {
       await _sock!.close();
+      _sock = null;
     }
     _sock = await Connector.autoconnect();
     notifyListeners();

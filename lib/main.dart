@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hm305p_remote/HM305PInterface.dart';
+import 'misc.dart';
 import 'test.dart';
 
 import 'HM305PConnector.dart';
@@ -64,21 +65,39 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    var state = widget._iface.state;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Column(
+      body: ListView(
+        padding: EdgeInsets.all(4),
         children: <Widget>[
           ElevatedButton(child: Text("Autoconnect"), onPressed: () async {
             await widget._iface.autoconnect();
           },),
-          ElevatedButton(child: Text("Turn on"), onPressed: widget._iface.isConnected() ? () async {
-            await widget._iface.turnOn();
-          } : null,),
-          ElevatedButton(child: Text("Turn off"), onPressed: widget._iface.isConnected() ? () async {
-            await widget._iface.turnOff();
-          } : null,),
+          if (widget._iface.isConnected()) ...[
+            ElevatedButton(style: ElevatedButton.styleFrom(
+                backgroundColor: state ? Colors.green : Colors.red,
+                foregroundColor: Colors.white,
+                //shadowColor: Colors.greenAccent,
+                //elevation: 3,
+                //shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
+                minimumSize: Size(100, 100), //////// HERE
+              ), child: Text(state ? "ON" : "OFF"), onPressed: widget._iface.isConnected() ? () async {
+                if (state) {
+                  await widget._iface.turnOff();
+                } else {
+                  await widget._iface.turnOn();
+                }
+            } : null,),
+            Row(children: [Spacer(), ...transpose([
+              [Text("Live voltage:"),Text("${widget._iface.liveVoltage.toStringAsFixed(3)}")],
+              [Text("Live current:"),Text("${widget._iface.liveCurrent.toStringAsFixed(3)}")],
+              [Text("Set voltage:"),Text("${widget._iface.voltageSetpoint.toStringAsFixed(3)}")],
+              [Text("Set current:"),Text("${widget._iface.currentSetpoint.toStringAsFixed(3)}")],
+            ]).map((e) => Column(children: e, crossAxisAlignment: CrossAxisAlignment.end,)).toList(), Spacer()]),
+          ],
         ],
       ),
     );
