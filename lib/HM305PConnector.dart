@@ -1,53 +1,70 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:multicast_dns/multicast_dns.dart';
+import 'package:sync/sync.dart' as s;
 import 'dart:io';
+import 'dart:developer';
 
-Future<void> foo() async {
-  //const String name = '_dartobservatory._tcp.local';
-  //const String name = '_PSUTEST._tcp.local';
-  const String service = '_0f50032d-cc47-407c-9f1a-a3a28a680c1e._http._tcp.local';
+import 'package:sync/waitgroup.dart';
 
-  print("create client");
+const String _SERVICE = '_0f50032d-cc47-407c-9f1a-a3a28a680c1e._http._tcp.local';
+
+Future<void> autoconnect() async {
+  //TODO Doesn't distinguish between different power supply instances
+
+  log("create client");
   final MDnsClient client = MDnsClient(rawDatagramSocketFactory: (dynamic host, int port, {bool? reuseAddress, bool? reusePort, int ttl = 1}) {
-    print("rawDatagramSocketFactory $host $port $reuseAddress $reusePort $ttl");
+    log("rawDatagramSocketFactory $host $port $reuseAddress $reusePort $ttl");
     return RawDatagramSocket.bind(host, port, reuseAddress: true, reusePort: false, ttl: ttl);
   });
-  // Start the client with default options.
-  print("start client");
+
+  log("start client");
   await client.start();
 
-  // print("await srv1");
-  // await for (final SrvResourceRecord srv in client.lookup<SrvResourceRecord>(ResourceRecordQuery.service("_HM305P._PSUTEST._tcp.local", isMulticast: false))) {
-  //   print("in srv1");
-  //   // Domain name will be something like "io.flutter.example@some-iphone.local._dartobservatory._tcp.local"
-  //   print('instance found at ${srv.target}:${srv.port}.');
-  // }
+  var addresses = <InternetAddress>[];
 
-
-  // Get the PTR record for the service.
-  print("await ptr");
-  await for (final PtrResourceRecord ptr in client.lookup<PtrResourceRecord>(ResourceRecordQuery.serverPointer(service))) {
-    print("in ptr lookup");
-    // Use the domainName from the PTR record to get the SRV record,
-    // which will have the port and local hostname.
-    // Note that duplicate messages may come through, especially if any
-    // other mDNS queries are running elsewhere on the machine.
-    print("await srv2");
-    await for (final SrvResourceRecord srv in client.lookup<SrvResourceRecord>(ResourceRecordQuery.service(ptr.domainName))) {
-      print("in srv2 lookup");
-      // Domain name will be something like "io.flutter.example@some-iphone.local._dartobservatory._tcp.local"
-      final String bundleId = ptr.domainName; //.substring(0, ptr.domainName.indexOf('@'));
-      print('Dart observatory instance found at ${srv.target}:${srv.port} for "$bundleId".');
-    }
-
-    print("await addr lookup");
+  log("await ptr");
+  await for (final PtrResourceRecord ptr in client.lookup<PtrResourceRecord>(ResourceRecordQuery.serverPointer(_SERVICE))) {
+    log("in ptr lookup");
+    log("await addr lookup");
     await for (final IPAddressResourceRecord addr in client.lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv4(ptr.domainName))) {
-      print("in addr lookup");
-      print(addr);
+      log("in addr lookup");
+      log("$addr");
+      addresses.add(addr.address);
     }
   }
 
+  log("$addresses");
 
-  print("stop client");
+  var wg = WaitGroup();
+  wg.add(1);
+
+  for (var addr in addresses) {
+    unawaited(Future(() async {
+      Socket socket = await Socket.connect('192.168.1.99', 1024);
+      log('connected');
+
+      socket.listen((List<int> event) {
+        log(utf8.decode(event));
+      });
+
+      socket.add(utf8.encode('hello'));
+
+      await Future.delayed(Duration(seconds: 5));
+
+      socket.close();
+
+      try {
+        wg.done();
+      } catch (e) {
+      }
+    }));
+  }
+
+  wg.wait();
+
+  log("stop client");
   client.stop();
-  print("done");
+  log("done");
 }

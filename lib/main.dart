@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'test.dart';
 
 import 'HM305PConnector.dart';
 
@@ -9,6 +10,7 @@ const SERVICE_ID = "0f50032d-cc47-407c-9f1a-a3a28a680c1e";
 
 void main() async {
   runApp(const MyApp());
+  await testExchanger4();
 }
 
 class MyApp extends StatelessWidget {
@@ -60,26 +62,8 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             ElevatedButton(child: Text("scan"), onPressed: () async {
-              await foo();
+              await autoconnect();
             },),
-            ElevatedButton(child: Text("advertise"), onPressed: () async {
-              // // Let's create our service !
-              // BonsoirService service = BonsoirService(
-              //   name: 'My wonderful service', // Put your service name here.
-              //   type: type,
-              //   port: 3030,
-              // );
-              //
-              // // And now we can broadcast it :
-              // BonsoirBroadcast broadcast = BonsoirBroadcast(service: service);
-              // await broadcast.ready;
-              // await broadcast.start();
-              //
-              // await Future.delayed(Duration(seconds: 30));
-              //
-              // // Then if you want to stop the broadcast :
-              // await broadcast.stop();
-            }),
           ],
         ),
       ),

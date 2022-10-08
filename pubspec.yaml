@@ -32,14 +32,7 @@ dependencies:
   flutter:
     sdk: flutter
   multicast_dns: ^0.3.2+2
-#  bonsoir:
-#    path: D:\clones\Bonsoir\bonsoir
-
-#dependency_overrides:
-#  bonsoir_android:
-#    path: D:\clones\Bonsoir\bonsoir_android
-#  bonsoir_platform_interface:
-#    path: D:\clones\Bonsoir\bonsoir_platform_interface
+  sync: ^0.3.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
