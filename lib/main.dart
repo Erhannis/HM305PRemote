@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hm305p_remote/HM305PInterface.dart';
 import 'test.dart';
 
 import 'HM305PConnector.dart';
@@ -9,12 +10,13 @@ import 'HM305PConnector.dart';
 const SERVICE_ID = "0f50032d-cc47-407c-9f1a-a3a28a680c1e";
 
 void main() async {
-  runApp(const MyApp());
-  await testChannel();
+  runApp(MyApp());
+  //await testStreams();
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  HM305PInterface _iface;
+  MyApp({super.key}): this._iface = HM305PInterface();
 
   // This widget is the root of your application.
   @override
@@ -24,13 +26,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(_iface, title: 'Flutter Demo Home Page'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  HM305PInterface _iface;
+
+  MyHomePage(this._iface, {super.key, required this.title});
 
   final String title;
 
@@ -39,33 +43,43 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  _MyHomePageState();
 
-  void _incrementCounter() {
+  late void Function() _notificationCallback = () {
     setState(() {
-      _counter++;
     });
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    widget._iface.addListener(_notificationCallback);
+  }
+
+  @override
+  void dispose() {
+    widget._iface.removeListener(_notificationCallback);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    //String type = '_wonderful-service._tcp';
-    String type = '_0f50032d-cc47._tcp';
-    //String type = '_0f50032d-cc47-407c-9f1a-a3a28a680c1e._http._tcp.local.';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(child: Text("scan"), onPressed: () async {
-              await autoconnect();
-            },),
-          ],
-        ),
+      body: Column(
+        children: <Widget>[
+          ElevatedButton(child: Text("Autoconnect"), onPressed: () async {
+            await widget._iface.autoconnect();
+          },),
+          ElevatedButton(child: Text("Turn on"), onPressed: widget._iface.isConnected() ? () async {
+            await widget._iface.turnOn();
+          } : null,),
+          ElevatedButton(child: Text("Turn off"), onPressed: widget._iface.isConnected() ? () async {
+            await widget._iface.turnOff();
+          } : null,),
+        ],
       ),
     );
   }

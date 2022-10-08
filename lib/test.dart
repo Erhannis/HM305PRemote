@@ -288,3 +288,30 @@ Future<void> testExchanger4() async {
 
   log("done");
 }
+
+Future<void> testStreams() async {
+  var sc = StreamController<String>();
+
+  unawaited(Future(() async {
+    log("--> generator");
+    for (var i = 0; i < 10; i++) {
+      log("--- generator $i");
+      sc.add("$i");
+    }
+    log("<-- generator");
+  }));
+
+  await for (var s in sc.stream) {
+    log("rx $s");
+    await sleep(1000);
+  }
+
+  // This didn't work
+  // sc.stream.listen((s) async {
+  //   log("rx $s");
+  //   await sleep(1000);
+  // });
+
+  await sleep(20000);
+  log("done");
+}
