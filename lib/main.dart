@@ -44,6 +44,10 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class Token {
+  
+}
+
 class _MyHomePageState extends State<MyHomePage> {
   _MyHomePageState();
 
@@ -63,7 +67,8 @@ class _MyHomePageState extends State<MyHomePage> {
     widget._iface.removeListener(_notificationCallback);
     super.dispose();
   }
-
+  Set<Token> _activeAutoconnects = {};
+  
   @override
   Widget build(BuildContext context) {
     var state = widget._iface.state;
@@ -74,9 +79,20 @@ class _MyHomePageState extends State<MyHomePage> {
       body: ListView(
         padding: EdgeInsets.all(4),
         children: <Widget>[
-          ElevatedButton(child: Text("Autoconnect"), onPressed: () async {
-            await widget._iface.autoconnect();
-          },),
+          Row(children: [
+            Expanded(flex: 1, child: ElevatedButton(child: Text("Autoconnect"), onPressed: () async {
+              var t = Token();
+              _activeAutoconnects.add(t);
+              setState(() {});
+              try {
+                await widget._iface.autoconnect();
+              } finally {
+                _activeAutoconnects.remove(t);
+                setState(() {});
+              }
+            },)),
+            if (_activeAutoconnects.isNotEmpty) Icon(Icons.hourglass_top),
+          ]),
           Text(textAlign: TextAlign.center, "Connected to server: ${widget._iface.isConnected()}"),
           if (widget._iface.isConnected()) Text(textAlign: TextAlign.center, "Server connected to PSU: ${widget._iface.serverConnectedToPSU}"),
           if (widget._iface.isConnected() && widget._iface.serverConnectedToPSU) ...[
