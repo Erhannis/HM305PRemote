@@ -104,12 +104,18 @@ class HM305PInterface extends ChangeNotifier {
     return _sock != null;
   }
 
+  //TODO Apparently there's a call deep in socket code that throws an exception not returned to us, if the socket's disconnected and we write to it.
+  //  I'm not sure there's a lot we can do about it, right now, but it messes things up royally.
+  //  I'm going to ignore it for now.
+  //  https://github.com/dart-lang/http/issues/551
+
   Future<void> turnOn() async {
     try {
       await _sock?.sendString("power=true");
     } catch (e) {
       log("error in turnOn: $e");
       _sock = null;
+      notifyListeners();
       rethrow; //TODO Should?  Shouldn't?
     }
   }
@@ -120,6 +126,51 @@ class HM305PInterface extends ChangeNotifier {
     } catch (e) {
       log("error in turnOn: $e");
       _sock = null;
+      notifyListeners();
+      rethrow; //TODO Should?  Shouldn't?
+    }
+  }
+
+  Future<void> setVoltageSetpoint(double x) async {
+    try {
+      await _sock?.sendString("voltageSetpoint=$x");
+    } catch (e) {
+      log("error in setVoltageSetpoint: $e");
+      _sock = null;
+      notifyListeners();
+      rethrow; //TODO Should?  Shouldn't?
+    }
+  }
+
+  Future<void> setCurrentSetpoint(double x) async {
+    try {
+      await _sock?.sendString("currentSetpoint=$x");
+    } catch (e) {
+      log("error in setCurrentSetpoint: $e");
+      _sock = null;
+      notifyListeners();
+      rethrow; //TODO Should?  Shouldn't?
+    }
+  }
+
+  Future<void> setVoltageOverprotect(double x) async {
+    try {
+      await _sock?.sendString("voltageOverprotect=$x");
+    } catch (e) {
+      log("error in setVoltageOverprotect: $e");
+      _sock = null;
+      notifyListeners();
+      rethrow; //TODO Should?  Shouldn't?
+    }
+  }
+
+  Future<void> setCurrentOverprotect(double x) async {
+    try {
+      await _sock?.sendString("currentOverprotect=$x");
+    } catch (e) {
+      log("error in setCurrentOverprotect: $e");
+      _sock = null;
+      notifyListeners();
       rethrow; //TODO Should?  Shouldn't?
     }
   }

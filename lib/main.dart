@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hm305p_remote/HM305PInterface.dart';
+import 'package:prompt_dialog/prompt_dialog.dart';
 import 'misc.dart';
 import 'test.dart';
 
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(_iface, title: 'Flutter Demo Home Page'),
+      home: MyHomePage(_iface, title: 'HM305P Remote'),
     );
   }
 }
@@ -93,17 +94,29 @@ class _MyHomePageState extends State<MyHomePage> {
                   await widget._iface.turnOn();
                 }
             } : null,),
-            Row(children: [Spacer(), ...transpose([
-              [Text("Live voltage:"),Text("${widget._iface.liveVoltage.toStringAsFixed(3)}")],
-              [Text("Live current:"),Text("${widget._iface.liveCurrent.toStringAsFixed(3)}")],
-              [Text("Set voltage:"),Text("${widget._iface.voltageSetpoint.toStringAsFixed(3)}")],
-              [Text("Set current:"),Text("${widget._iface.currentSetpoint.toStringAsFixed(3)}")],
-              [Text("Voltage overprotect:"),Text("${widget._iface.voltageOverprotect.toStringAsFixed(3)}")],
-              [Text("Current overprotect:"),Text("${widget._iface.currentOverprotect.toStringAsFixed(3)}")],
-            ]).map((e) => Column(children: e, crossAxisAlignment: CrossAxisAlignment.end,)).toList(), Spacer()]),
+            Table(border: TableBorder(horizontalInside: BorderSide(color: Colors.black)), children: [ // I am struggling not to use impolite words in the direction of Flutter's UI framework.  "wrap_contents" shouldn't be a difficult behavior to achieve.
+              TableRow(children: [Align(alignment: Alignment.bottomRight, child: Text("Live voltage: ")),Text("${widget._iface.liveVoltage.toStringAsFixed(3)}"),const Text("")]),
+              TableRow(children: [Align(alignment: Alignment.bottomRight, child: Text("Live current: ")),Text("${widget._iface.liveCurrent.toStringAsFixed(3)}"),const Text("")]),
+              TableRow(children: [Align(alignment: Alignment.bottomRight, child: Text("Set voltage: ")),Text("${widget._iface.voltageSetpoint.toStringAsFixed(3)}"),ElevatedButton(child: Text("Edit"), onPressed: () async {await editField(widget._iface.voltageSetpoint, widget._iface.setVoltageSetpoint);},)]),
+              TableRow(children: [Align(alignment: Alignment.bottomRight, child: Text("Set current: ")),Text("${widget._iface.currentSetpoint.toStringAsFixed(3)}"),ElevatedButton(child: Text("Edit"), onPressed: () async {await editField(widget._iface.currentSetpoint, widget._iface.setCurrentSetpoint);},)]),
+              TableRow(children: [Align(alignment: Alignment.bottomRight, child: Text("Voltage overprotect: ")),Text("${widget._iface.voltageOverprotect.toStringAsFixed(3)}"),ElevatedButton(child: Text("Edit"), onPressed: () async {await editField(widget._iface.voltageOverprotect, widget._iface.setVoltageOverprotect);},)]),
+              TableRow(children: [Align(alignment: Alignment.bottomRight, child: Text("Current overprotect: ")),Text("${widget._iface.currentOverprotect.toStringAsFixed(3)}"),ElevatedButton(child: Text("Edit"), onPressed: () async {await editField(widget._iface.currentOverprotect, widget._iface.setCurrentOverprotect);},)]),
+            ]),
           ],
         ],
       ),
     );
+  }
+
+  Future<void> editField(double initial, Future<void> Function(double x) commitCallback) async {
+    var ret = await prompt(context, initialValue: "$initial");
+    if (ret != null) {
+      try {
+        var d = double.parse(ret);
+        await commitCallback(d);
+      } catch (e) {
+        log("Error editing field: $e");
+      }
+    }
   }
 }
