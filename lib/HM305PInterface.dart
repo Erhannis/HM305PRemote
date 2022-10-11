@@ -15,6 +15,8 @@ class HM305PInterface extends ChangeNotifier {
   double liveCurrent = 0.0;
   double voltageSetpoint = 0.0;
   double currentSetpoint = 0.0;
+  double voltageOverprotect = 0.0;
+  double currentOverprotect = 0.0;
 
   HM305PInterface() {
     unawaited(Future(() async {
@@ -25,11 +27,8 @@ class HM305PInterface extends ChangeNotifier {
             while (true) {
               var msg = String.fromCharCodes((await _sock!.recvMsg())!);
               log("state reader rx msg $msg");
-              // zc.broadcast(f"state:{state}")
-              // zc.broadcast(f"liveVoltage:{liveVoltage}")
-              // zc.broadcast(f"liveCurrent:{liveCurrent}")
-              // zc.broadcast(f"voltageSetpoint:{voltageSetpoint}")
-              // zc.broadcast(f"currentSetpoint:{currentSetpoint}")
+              //zc.broadcast(f"voltageOverprotect:{voltageOverprotect}")
+              //zc.broadcast(f"currentOverprotect:{currentOverprotect}")
               List<String> parts = msg.split(":");
               if (parts.length != 2) {
                 log("rx unhandled message: $msg");
@@ -44,16 +43,22 @@ class HM305PInterface extends ChangeNotifier {
                     state = parts[1] == "1";
                     break;
                   case "liveVoltage":
-                    liveVoltage = double.parse(parts[1]) / 100;
+                    liveVoltage = double.parse(parts[1]);
                     break;
                   case "liveCurrent":
-                    liveCurrent = double.parse(parts[1]) / 1000;
+                    liveCurrent = double.parse(parts[1]);
                     break;
                   case "voltageSetpoint":
-                    voltageSetpoint = double.parse(parts[1]) / 100;
+                    voltageSetpoint = double.parse(parts[1]);
                     break;
                   case "currentSetpoint":
-                    currentSetpoint = double.parse(parts[1]) / 1000;
+                    currentSetpoint = double.parse(parts[1]);
+                    break;
+                  case "voltageOverprotect":
+                    voltageOverprotect = double.parse(parts[1]);
+                    break;
+                  case "currentOverprotect":
+                    currentOverprotect = double.parse(parts[1]);
                     break;
                 }
                 notifyListeners();

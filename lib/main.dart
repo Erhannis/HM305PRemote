@@ -98,6 +98,8 @@ class _MyHomePageState extends State<MyHomePage> {
               [Text("Live current:"),Text("${widget._iface.liveCurrent.toStringAsFixed(3)}")],
               [Text("Set voltage:"),Text("${widget._iface.voltageSetpoint.toStringAsFixed(3)}")],
               [Text("Set current:"),Text("${widget._iface.currentSetpoint.toStringAsFixed(3)}")],
+              [Text("Voltage overprotect:"),Text("${widget._iface.voltageOverprotect.toStringAsFixed(3)}")],
+              [Text("Current overprotect:"),Text("${widget._iface.currentOverprotect.toStringAsFixed(3)}")],
             ]).map((e) => Column(children: e, crossAxisAlignment: CrossAxisAlignment.end,)).toList(), Spacer()]),
           ],
         ],
